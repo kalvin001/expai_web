@@ -11,7 +11,7 @@ const MyStockChart = () => {
  
   useEffect(() => {  
     const filter = { "id":parseInt(id, 10)}
-    let url = `${baseURL}/data?name=BarDay`
+    let url = `${baseURL}/q?name=BarDay`
               + `&filter=${JSON.stringify(filter)}&size=10000`
     
     axios.get(url).then((response) => { 

@@ -45,7 +45,7 @@ const dataMenu: MenuDataItem[] = [
   }, 
   {
     name: '管理',
-    path: '/data/mgr',
+    path: '/func/datasets',
     icon: <DashboardOutlined />,
   }, 
 ];
@@ -85,7 +85,7 @@ const demoMenu: MenuDataItem[] = [
 const taskMenu: MenuDataItem[] =  [
   {
     name: '看板',
-    path: '/task/board',
+    path: '/func/monitor_system',
     icon: <DashboardOutlined />,
   },
  
