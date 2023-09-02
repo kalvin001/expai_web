@@ -29,7 +29,7 @@ const dataMenu: MenuDataItem[] = [
   }, 
   {
     name: '图像',
-    path: '/data/img',
+    path: '/data/Cifar10',
     icon: <DashboardOutlined />,
   }, 
   {
@@ -42,6 +42,11 @@ const dataMenu: MenuDataItem[] = [
         path: '/data/TsNewsCCTV',
       }
     ],
+  }, 
+  {
+    name: '管理',
+    path: '/data/mgr',
+    icon: <DashboardOutlined />,
   }, 
 ];
 

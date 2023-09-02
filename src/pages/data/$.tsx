@@ -4,7 +4,8 @@ import axios from 'axios';
 import { baseURL } from "@/app"
 import { useLocation,Link } from 'react-router-dom';
 import { log } from 'console';
-
+import { Image } from 'antd';  
+import {ProTable,PageContainer, ProCard} from '@ant-design/pro-components';
 
 const KData: React.FC = () => {
   const location = useLocation();
@@ -38,7 +39,11 @@ const KData: React.FC = () => {
   const [qkey, setQkey] = useState(defaultState.qkey); // 新的状态变量
   const [sort, setSort] = useState(defaultState.sort); // 排序状态
 
+  const [activeTab, setActiveTab] = useState('1');
 
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+  };
   const handleFilterChange = (key, value) => {
     setSelectedFilters((prev) => ({ ...prev, [key]: value }));
   };
@@ -75,12 +80,19 @@ const KData: React.FC = () => {
       sortOrder: sort.field === col.dataIndex ? sort.order : false,
       render: (text, record) => {
         // 使用 record.id 获取 id 字段
+        if (col.key === 'img' || col.type === 'base64') {
+          return   <Image  src={`data:image/png;base64,${text}`} />
+        }
+      
+
         const id = record.id;
         if (col.link) {
           return <a href={`/data/bar?id=${id}`} title={text} style={{ maxWidth: 1000, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</a>
         } else {
           return <div title={text} style={{ maxWidth: 1000, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</div>
         }
+        
+
       },
     }));
     setColumns(generatedColumns);
@@ -147,19 +159,59 @@ const KData: React.FC = () => {
     });
   }, [dataName,dataStates]); //,filterOptions ,filterOptions #location.pathname
 
+
+    // 使用 request 函数获取数据
+    const fetchData = async (params, sort, filter) => {
+      console.log("fetchData--",params, sort, filter)
+      // 这里可以转化 params，sort，filter 到你的 API 需要的格式
+      const url = `${baseURL}/data?name=${dataName}&page=${params.current}&size=${params.pageSize}`
+             //   + `&filter=${JSON.stringify(filter)}`
+              //  + `&sort_field=${sort.field}&sort_order=${sort.order}`;
+      const response = await axios.get(url);
+      return {
+        data: response.data.data,
+        success: true,
+        total: response.data.total_cnt,
+      };
+    };
   return (
     <>
-    {/* <Breadcrumb style={{ marginBottom: 0 }}>
+    <div style={{margin:"10px 10px 0px 30px"}}>
+    <Breadcrumb style={{ marginBottom: 0 }}>
     <Breadcrumb.Item><Link to="/">数据</Link></Breadcrumb.Item>
     <Breadcrumb.Item>
         <Link to="/stg/factor">行情</Link>
     </Breadcrumb.Item>
-    <Breadcrumb.Item>{name}</Breadcrumb.Item>
-   </Breadcrumb> */}
-    <Tabs defaultActiveKey="1">
-    <Tabs.TabPane tab="明细" key="1">
+    {/* <Breadcrumb.Item>{name}</Breadcrumb.Item> */}
+   </Breadcrumb>
+   </div>
+  <PageContainer 
+      // extra={[
+      //   <Button key="3">操作</Button>,
+      //   <Button key="2">操作</Button>,
+      //   <Button key="1" type="primary">
+      //     主操作
+      //   </Button>,
+      // ]}
+      tabList={[
+        {
+          tab: '快照',
+          key: '1',
+        },
+        {
+          tab: '快照2',
+          key: '2',
+        }
+      ]}
+      onTabChange={handleTabChange}
+
+    />
+     <ProCard direction="column" ghost gutter={[0, 16]} style={{margin:'10px 10px 10px 10px'}}>
+   {activeTab === '1' && 
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',marginBottom:8}}>
+      <div style={{ display: 'flex', background:"#fff", 
+      padding: '15px 20px 10px 20px',
+      justifyContent: 'space-between', alignItems: 'center',marginBottom:0}}>
         <div>
           {Object.keys(currentDataState.filterOptions).map((key) => (
             <>
@@ -185,6 +237,7 @@ const KData: React.FC = () => {
       </div>
         <Table columns={columns} dataSource={data}  //rowKey={record => record.code}
           scroll={{ x: 'max-content' }}
+          style={{   padding: '0'}}  
           onChange={handleTableChange} 
           //size='middle'
           pagination={{ // 分页配置
@@ -195,11 +248,58 @@ const KData: React.FC = () => {
               onChange: (page) => setCurrentPage(page),
           }} />;
     </div>
-    </Tabs.TabPane>
-    <Tabs.TabPane tab="统计" key="2">
-    统计
-    </Tabs.TabPane>
-    </Tabs>
+    }
+
+    {activeTab === '2'  &&
+    <ProTable
+        columns={columns}
+        request={fetchData}
+        rowKey="id"
+        pagination={{
+          showQuickJumper: true,
+          pageSize: 20,
+        }}
+        dateFormatter="string"
+        toolbar={{       
+          
+          //title: '高级表格1', tooltip: '这是一个标题提示', 
+          search: {
+          onSearch: (value: string) => {
+            alert(value);
+          },
+        }}}
+        search={false}
+        // toolBarRender={() =>  [
+        //   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        //     <div style={{ display: 'flex' }}>
+        //       {Object.keys(currentDataState.filterOptions).map((key) => (
+        //         <Radio.Group 
+        //           key={key}
+        //           style={{ marginRight: 20 }}
+        //           value={currentDataState.selectedFilters[key]}
+        //           onChange={(e) => handleFilterChange(key, e.target.value)}
+        //         >
+        //           {currentDataState.filterOptions[key].map((option) => (
+        //             <Radio.Button key={option.value} value={option.value}>
+        //               {option.label}
+        //             </Radio.Button>
+        //           ))}
+        //         </Radio.Group>
+        //       ))}
+        //     </div>
+        //     <div>
+        //       {/* 这里是你的搜索导航条 */}
+        //       <Input.Search
+        //         placeholder="search"
+        //         onSearch={handleSearch}
+        //         style={{ width: 200 }}
+        //       />
+        //     </div>
+        //   </div>
+        // ] }
+      />
+     }
+     </ProCard>
     </>
     )};
 

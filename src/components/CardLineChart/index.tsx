@@ -40,7 +40,8 @@ const CardLineChart: React.FunctionComponent<CardLineChartProps> = (props: CardL
     <Card title={title}>
       <div className={styles.cardSubTitle}>{subTitle}</div>
       <div className={styles.cardValue}>{value}</div>
-      <div className={styles.cardDes}>{des}<span>{rate}↑</span></div>
+      <div className={styles.cardDes}>{des}<span>{rate}</span></div> 
+      {/* ↑ */}
       <TinyLine
         data={values!}
         width={10}
