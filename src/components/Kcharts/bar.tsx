@@ -46,9 +46,9 @@ const generateChartOptions = (title, ohlc, volume) => {
 
                   inputDateFormat: '%Y-%m-%d',
       buttons: [ {
-          type: 'week',
+          type: 'month',
           count: 1,
-          text: '1周'
+          text: '1月'
         }, {
           type: 'month',
           count: 3,

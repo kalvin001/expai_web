@@ -1,7 +1,7 @@
 import React, { useEffect,useState} from 'react';
 import axios from 'axios';
 import { baseURL } from "@/app"
-import HChartBar from '@/components/Hcharts/bar';
+import HChartBar from '@/components/Kcharts/bar';
 import { Card, Breadcrumb, Tabs } from 'antd';
 import { useParams,Link,useLocation  } from 'react-router-dom'; 
 const MyStockChart = () => {

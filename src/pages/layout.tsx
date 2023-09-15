@@ -1,59 +1,107 @@
-import { Outlet, Link, useLocation } from 'ice'; 
+import { Outlet, Link, useLocation} from 'ice'; 
 import { Menu } from 'antd';
-import { modelMenu, dataMenu, demoMenu, taskMenu  } from '@/menuConfig';
+import { modelMenu, dataMenu, demoMenu, mgrMenu  } from '@/menuConfig';
 import AvatarDropdown from '@/components/AvatarDropdown';
 import store from '@/store';
 import logo from '@/assets/logo.png';
 import styles from './layout.module.css';
 import Footer from '@/components/Footer';
-import { GoldOutlined, CodeSandboxOutlined,ApartmentOutlined,BuildOutlined,QrcodeOutlined } from '@ant-design/icons';
+import { GoldOutlined, CodeSandboxOutlined,RiseOutlined,PictureOutlined, AccountBookOutlined,AimOutlined,ClockCircleOutlined,
+  BookOutlined,StockOutlined,RadarChartOutlined,CustomerServiceOutlined,HomeOutlined,VideoCameraOutlined,
+  ApartmentOutlined,SendOutlined,BuildOutlined,GlobalOutlined,QrcodeOutlined,TransactionOutlined } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import { ProLayout } from '@ant-design/pro-components';
-const menuItemsConfig = [
-  { label: '数据', key: 'data', icon: <CodeSandboxOutlined />, path: 'data\\Snapshot' },
-  { label: '模型', key: 'model', icon: <QrcodeOutlined />, path: 'model/factor' },
-  { label: '任务', key: 'task', icon: <ApartmentOutlined />, path: 'task/board' },
-  { label: '模拟', key: 'replay', icon: <QrcodeOutlined />, path: 'replay/factor' },
+import axios from 'axios'; 
+import { baseURL } from "@/app" 
+import { Breadcrumb } from 'antd'; 
 
-  { label: '例子', key: 'example', icon: <GoldOutlined />, path: '' },
-]; 
+const iconMapping = {
+  fin: <AccountBookOutlined />,
+  dataset: <CodeSandboxOutlined />,
+  model: <AimOutlined />,
+  mgr: <ApartmentOutlined />,
+  replay:<ClockCircleOutlined />,
+  quote: <RiseOutlined />,
+  cap: <TransactionOutlined />,
+  macro: <GlobalOutlined />,
+  info: <SendOutlined />,
+  img: <PictureOutlined />,
+  text:<BookOutlined />,
+  sers:<StockOutlined />,
+  audio:<CustomerServiceOutlined />,
+  video:<VideoCameraOutlined />,
+  m_modal:<RadarChartOutlined />
+};
 export default function Layout() {
   const location = useLocation();
   const [userState] = store.useModel('user'); 
-  const [selectedMenu, setSelectedMenu] = useState(menuItemsConfig[0].key); // 设置初始值
+  const [menuItems, setMenuItems] = useState([]);
+  const [selectedMenu, setSelectedMenu] = useState(null); // 设置初始值 #menuItemsConfig[0].key
+  
+  useEffect(() => {
+    // 假设从后端获取数据并设置 menuItems
+    const url = `${baseURL}/pages`
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        setMenuItems(data);
+        
+        // 创建 menuItemsConfig
+        const tempMenuItemsConfig = data.map((item) => ({
+          label: item.name,
+          key: item.key,
+          icon: iconMapping[item.key] || null,
+          path: item.path,
+          children: item.children || []
+        }));
+  
+        // 找到第一个叶子节点
+        for (const item of tempMenuItemsConfig) {
+          if (!item.children || item.children.length === 0) {
+            setSelectedMenu(item.key); // 设置 selectedMenu
+            break;
+          }
+        }
+      });
+  }, []);
+
+  const menuItemsConfig = menuItems.map((item) => ({
+    label: item.name,
+    key: item.key,
+    icon: iconMapping[item.key] || null,
+    path: item.path,
+    children: item.children || []  // 假设后端返回数据中包含 "children"
+  }));
+ 
 
   useEffect(() => {
-    if (location.pathname.includes('/data')) setSelectedMenu('data');
-    else if (location.pathname.includes('/model')) setSelectedMenu('model');
-    else if (location.pathname.includes('/task')) setSelectedMenu('task');
-    else if (location.pathname.includes('/example')) setSelectedMenu('example');
-    else setSelectedMenu('data');
-  }, [location.pathname]);
-
-  useEffect(() => {
-    // 在这里，你可以触发侧边菜单重新渲染或者其他你需要的操作
-    getAsideMenu(); 
-  }, [selectedMenu]); // 当selectedMenu变化时触发
-
+    // 遍历所有菜单项
+    menuItemsConfig.forEach(item => { 
+        console.log(item.key,location.pathname,location.pathname.includes(item.key));
+        if (location.pathname.includes(item.key)) {
+            setSelectedMenu(item.key);
+            return;
+        }
+    }); 
+}, [location.pathname, menuItemsConfig]);
 
   const handleMenuClick = (key) => {
     setSelectedMenu(key); // 设置新的selectedMenu
   };
-
+ 
   const getAsideMenu = () => {
-    switch (selectedMenu) {
-      case 'data':
-        return dataMenu
-      case 'model':
-        return modelMenu
-      case 'task':
-        return taskMenu
-      case 'demo':
-        return demoMenu
-      default:
-        return dataMenu
+    const foundItem = menuItemsConfig.find(item => item.key === selectedMenu);
+  
+    if (foundItem && Array.isArray(foundItem.children)) {
+      return foundItem.children.map(child => ({
+        ...child,
+        icon: iconMapping[child.key],
+        path: child.path // 假设这里已经是完整的路径
+      }));
     }
-  };
+    return [];
+  }; 
 
   if (['/login'].includes(location.pathname)) {
     return <Outlet />;
@@ -71,14 +119,14 @@ export default function Layout() {
       // route={{ path: '/users', name: 'Users', component: './Users' }}
       layout="mix"
       headerContentRender={() => (<>
-        <Menu mode="horizontal" className="rightAlignedMenu" selectedKeys={[selectedMenu]}>
-          {menuItemsConfig.map((item) => (
-            <Menu.Item key={item.key} icon={item.icon} 
-              onClick={() => handleMenuClick(item.key)}>
-              <Link to={item.path}>{item.label}</Link>
-            </Menu.Item>
-          ))}
-        </Menu>
+        <Menu mode="horizontal" className="rightAlignedMenu" selectedKeys={[selectedMenu]}
+          items={menuItemsConfig.map((item) => ({
+            key: item.key,
+            icon: item.icon,
+            label: <Link to={item.path}>{item.label}</Link>,
+            onClick: () => handleMenuClick(item.key)
+          }))}
+        /> 
         </>
       )}
       avatarProps={{ 

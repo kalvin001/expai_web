@@ -44,9 +44,28 @@ const dataMenu: MenuDataItem[] = [
     ],
   }, 
   {
-    name: '管理',
-    path: '/func/datasets',
+    name: '数据源',
+    path: '/data/source',
     icon: <DashboardOutlined />,
+    children: [
+      {
+        name: '富途',
+        path: '/data/source/futu',
+        children: [
+          {
+            name: '新闻',
+            path: '/data/TsNewsCCTV',
+          }
+        ],
+      },
+      {
+        name: 'TuShare',
+        path: '/data/source/tushare',
+      }, {
+        name: 'AkShare',
+        path: '/data/source/akshare',
+      }
+    ],
   }, 
 ];
 
@@ -82,14 +101,28 @@ const demoMenu: MenuDataItem[] = [
   },
 ];
 
-const taskMenu: MenuDataItem[] =  [
+const mgrMenu: MenuDataItem[] =  [
   {
-    name: '看板',
-    path: '/func/monitor_system',
+    name: '元数据',
+    icon: <DashboardOutlined />,
+    children: [
+      {
+        name: '数据集',
+        path: '/data/datasets',
+      },
+      {
+        name: '枚举',
+        path: '/data/enums',
+      }
+    ],
+  }, 
+  {
+    name: '系统',
+    path: '/mgr/monitor_system',
     icon: <DashboardOutlined />,
   },
  
 ];
 
 
-export { modelMenu, dataMenu, demoMenu, taskMenu };
+export { modelMenu, dataMenu, demoMenu, mgrMenu };

@@ -1,17 +1,21 @@
 import React, { useEffect, useState,useRef } from 'react';
-import { Space, Table,Tabs,Breadcrumb, Tag,Radio,Input, Button } from 'antd';
+import { Space, Table,Tabs,Breadcrumb, Tag,Radio,Input, Button, Row, Col, Card } from 'antd';
 import axios from 'axios'; 
 import { baseURL } from "@/app"
 import { useLocation,Link } from 'react-router-dom';
 import { log } from 'console';
 import { Image } from 'antd';  
 import {ProTable,PageContainer, ProCard} from '@ant-design/pro-components';
+import KFlow from '@/components/Kcharts/flow';
 
+const { Meta } = Card;
 const KData: React.FC = () => {
   const location = useLocation();
   const pathParts = location.pathname.split('/'); 
+  const [page,setPage] = useState({});
   const qType = pathParts[pathParts.length - 2];
   const dataName = pathParts[pathParts.length - 1];
+  const pageName = pathParts[pathParts.length - 1];
   //const [dataName, setDataName] = useState(pathParts[pathParts.length - 1]);
   // 使用一个状态对象来保存各个dataName的状态
     // 从状态对象中获取当前dataName的状态，或使用默认值
@@ -31,6 +35,8 @@ const KData: React.FC = () => {
 
 
   const [data, setData] = useState([]);
+  const [pageSize, setPageSize] = useState(20); // 每页记录数
+  const [dataType, setDataType] = useState(''); // 图表数据
   const [columns, setColumns] = useState([]);
   const [total, setTotal] = useState(0); // 总记录数
   const [currentPage, setCurrentPage] = useState(defaultState.currentPage); // 当前页码
@@ -42,6 +48,20 @@ const KData: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('1');
 
+  useEffect(() => {
+    // 假设从后端获取数据并设置 menuItems 
+    const url = `${baseURL}/page?name=${pageName}`
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        setPage(data);
+        
+         
+      });
+  }, [pageName]);
+  
+
   const handleTabChange = (key) => {
     setActiveTab(key);
   };
@@ -51,18 +71,21 @@ const KData: React.FC = () => {
 
   // 定义一个函数来获取和设置过滤选项, 
   const setFilterOptionsFromResponse = (navs) => {
-    console.log("navs--",navs)
     if (navs == null) {
       setSelectedFilters({})
       setFilterOptions({})
+      return  
     }
+    
+    console.log("navs--",navs)
 
     const options = {};
 
     for (const key in navs) {
       options[key] = navs[key].map((item) => ({
         value: item[0],
-        label: `${item[0]}`,
+        label: `${item[1]}`,
+        // key: item[0],
       }));
       // 默认选择第一个选项
       setSelectedFilters((prev) => ({ ...prev, [key]: options[key][0].value }));
@@ -70,30 +93,37 @@ const KData: React.FC = () => {
     setFilterOptions(options);
   };
 
-  const setColumnsFromResponse = (columns) => {
-    // 根据元数据构建列定义
+
+  const setColumnsFromResponse = (columns) => { 
     const generatedColumns = columns.map((col, index) => ({
-      title: col.title || '', // 为属性提供默认值
+      
+      title: col.title || '',
       dataIndex: col.dataIndex || '',
       key: col.key || '',
       fixed: index === 0 ? 'left' : undefined,
-      sorter: true, // 允许排序
+      sorter: true,
       sortOrder: sort.field === col.dataIndex ? sort.order : false,
-      render: (text, record) => {
-        // 使用 record.id 获取 id 字段
+      render: (val, record) => {
         if (col.key === 'img' || col.type === 'base64') {
-          return   <Image  src={`data:image/png;base64,${text}`} />
+          return <Image src={`data:image/png;base64,${val}`} />;
         }
-      
-
+        // 判断字段是否为 list 类型
+        if (Array.isArray(val)) {
+          return (
+            <div>
+              {val.map((item, index) => (
+                <Tag key={index}>{item}</Tag>
+              ))}
+            </div>
+          );
+        }
+  
         const id = record.id;
         if (col.link) {
-          return <a href={`/data/bar?id=${id}`} title={text} style={{ maxWidth: 1000, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</a>
+          return <a    href={`/data/bar?id=${id}`} title={val} style={{ maxWidth: 1000, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{val}</a>
         } else {
-          return <div title={text} style={{ maxWidth: 1000, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{text}</div>
+          return <div  title={val} style={{ maxWidth: 1000, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{val}</div>
         }
-        
-
       },
     }));
     setColumns(generatedColumns);
@@ -125,52 +155,54 @@ const KData: React.FC = () => {
 
   useEffect(() => {
 
-    // setCurrentPage(currentDataState.currentPage);
-    // setSelectedFilters(currentDataState.selectedFilters); 
-    // setQkey(currentDataState.qkey); 
-    // setSort(currentDataState.sort); 
+    const fetchData = () => {
+      const currentDataState = dataStates[dataName] || defaultState;
+      setCurrentDataState(currentDataState);
+      const url = `${baseURL}/q?name=${dataName}&page=${currentDataState.currentPage}&size=${pageSize}&type=${qType}`
+                + `&filter=${JSON.stringify(currentDataState.selectedFilters)}`
+                +`&qkey=${currentDataState.qkey}&sort_field=${currentDataState.sort.field}&sort_order=${currentDataState.sort.order}`;
+  
+      axios.get(url).then((response) => { 
+        let ret_data = response.data
+        if (typeof response.data === 'string') {
+          ret_data = JSON.parse(response.data)
+        }
+  
+        setData(ret_data.data);
+        setTotal(ret_data.total_cnt);
+        setDataType(ret_data.data_type);
+        //设置导航
+        if (!currentDataState.isFiltersInitialized) {
+          //仅仅在第一次加载时设置导航
+          setFilterOptionsFromResponse(response.data.navs)
+          currentDataState.isFiltersInitialized = true;
+          setIsFiltersInitialized(true); // 标记过滤选项已初始化
+        } 
+        setColumnsFromResponse(ret_data.columns)
+        console.log("ret_data--",ret_data)
+  
+      }).catch((error) => {
+        console.error('An error occurred while fetching data:', error);
+      });
+    };
+    // 立即执行一次，然后设置定时器
+    fetchData();
+    const intervalId = setInterval(fetchData, 30000); // 每分钟执行一次
 
-    const currentDataState = dataStates[dataName] || defaultState;
-    setCurrentDataState(currentDataState);
-    const url = `${baseURL}/q?name=${dataName}&page=${currentDataState.currentPage}&size=20&type=${qType}`
-              + `&filter=${JSON.stringify(currentDataState.selectedFilters)}`
-              +`&qkey=${currentDataState.qkey}&sort_field=${currentDataState.sort.field}&sort_order=${currentDataState.sort.order}`;
-
-    axios.get(url).then((response) => { 
-      let ret_data = response.data
-      //console.log("ret_data--",ret_data)
-      if (typeof response.data === 'string') {
-        ret_data = JSON.parse(response.data)
-      }
-
-      setData(ret_data.data);
-      setTotal(ret_data.total_cnt);
-      //设置导航
-      if (!currentDataState.isFiltersInitialized) {
-        //仅仅在第一次加载时设置导航
-        setFilterOptionsFromResponse(response.data.navs)
-        console.log("currentDataState.isFiltersInitialized--",currentDataState.isFiltersInitialized,filterOptions,response.data.navs)
-        currentDataState.isFiltersInitialized = true;
-        setIsFiltersInitialized(true); // 标记过滤选项已初始化
-      } 
-      setColumnsFromResponse(ret_data.columns)
-
-    }).catch((error) => {
-      console.error('An error occurred while fetching data:', error);
-    });
+    // 当组件卸载的时候，清除定时器
+    return () => clearInterval(intervalId);
   }, [dataName,dataStates]); //,filterOptions ,filterOptions #location.pathname
 
   return (
     <>
-    <div style={{margin:"10px 10px 0px 30px"}}>
+    {/* <div style={{margin:"10px 10px 0px 30px"}}>
     <Breadcrumb style={{ marginBottom: 0 }}>
     <Breadcrumb.Item><Link to="/">数据</Link></Breadcrumb.Item>
     <Breadcrumb.Item>
         <Link to="/stg/factor">行情</Link>
-    </Breadcrumb.Item>
-    {/* <Breadcrumb.Item>{name}</Breadcrumb.Item> */}
+    </Breadcrumb.Item> 
    </Breadcrumb>
-   </div>
+   </div> */}
   <PageContainer 
       extra={[ 
         // <Button key="1" type="primary">
@@ -191,14 +223,13 @@ const KData: React.FC = () => {
 
     />
    <div style={{margin:'10px 10px 10px 10px'}}>
-   {activeTab === '1' && 
+  {activeTab === '1' && 
      <>
       <div style={{ display: 'flex', background:"#fff", 
       padding: '15px 20px 10px 20px',
       justifyContent: 'space-between', alignItems: 'center',marginBottom:0}}>
         <div>
           {Object.keys(currentDataState.filterOptions).map((key) => (
-            <>
               <Radio.Group key={key}
                 style={{ marginRight: 20 }}
                 value={currentDataState.selectedFilters[key]}
@@ -210,7 +241,6 @@ const KData: React.FC = () => {
                   </Radio.Button>
                 ))}
               </Radio.Group>
-            </>
           ))}
         </div>
         <Input.Search
@@ -219,23 +249,47 @@ const KData: React.FC = () => {
           style={{ width: 200 }}
         />
       </div>
-        <Table columns={columns} dataSource={data}  //rowKey={record => record.code}
-          scroll={{ x: 'max-content' }}
-          style={{   padding: '0'}}  
-          onChange={handleTableChange} 
-          //size='middle'
-          pagination={{ // 分页配置
-              current: currentDataState.currentPage,
-              pageSize:20,
-              total:total,
-              showTotal:(total) => `共 ${total} 条`,
-              onChange: (page) => setCurrentPage(page),
-          }} />;
+      { 
+         dataType === 'img' ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+          {data.map((item, index) => (
+            <Card key={index} style={{ margin: '-1px -1px 0px -1px',textAlign: 'center' }}>
+              {/* <img src={item.imgUrl} alt={item.description} /> */}
+              <Image src={`data:image/png;base64,${item.img}`} />
+              <p>{item.label}</p>
+              {/* <Meta  title={"("+item.label+")"}  /> */}
+            </Card>
+          ))}
+        </div> 
+         
+        //  ): dataType === 'text' ? (
+        //     <div></div>
+          ):(
+          <Table 
+            columns={columns} 
+            dataSource={data} 
+            rowKey={record => record.id}
+            //rowKey={(record, index) => index.toString()}
+            scroll={{ x: 'max-content' }}
+            style={{   padding: '0'}}  
+            onChange={handleTableChange} 
+            //size='middle'
+            pagination={{ // 分页配置
+                current: currentDataState.currentPage,
+                pageSize:pageSize,
+                total:total,
+                showTotal:(total) => `共 ${total} 条`,
+                onChange: (page) => setCurrentPage(page),
+            }} />
+         )
+       
+        
+        }   
      </>
     }
 
     {activeTab === '2'  && 
-      <>sdsd</>
+      <><KFlow /></>
     }
      </div>
     </>
