@@ -6,9 +6,9 @@ import store from '@/store';
 import logo from '@/assets/logo.png';
 import styles from './layout.module.css';
 import Footer from '@/components/Footer';
-import { GoldOutlined, CodeSandboxOutlined,RiseOutlined,PictureOutlined, AccountBookOutlined,AimOutlined,ClockCircleOutlined,
-  BookOutlined,StockOutlined,RadarChartOutlined,CustomerServiceOutlined,HomeOutlined,VideoCameraOutlined,
-  ApartmentOutlined,SendOutlined,BuildOutlined,GlobalOutlined,QrcodeOutlined,TransactionOutlined } from '@ant-design/icons';
+import { GoldOutlined, CodeSandboxOutlined,RiseOutlined,PictureOutlined, AccountBookOutlined,AimOutlined,ClockCircleOutlined,DollarCircleOutlined,
+  BookOutlined,StockOutlined,RadarChartOutlined,CustomerServiceOutlined,HomeOutlined,VideoCameraOutlined,FundProjectionScreenOutlined,
+  ApartmentOutlined,TrademarkCircleOutlined,CloudDownloadOutlined,SettingOutlined,ExpandOutlined,SketchOutlined,DesktopOutlined,FontColorsOutlined,SendOutlined,BuildOutlined,GlobalOutlined,QrcodeOutlined,TransactionOutlined,ControlOutlined,DatabaseOutlined,UserOutlined,WalletOutlined    } from '@ant-design/icons';
 import { useState, useEffect } from 'react';
 import { ProLayout } from '@ant-design/pro-components';
 import axios from 'axios'; 
@@ -16,10 +16,11 @@ import { baseURL } from "@/app"
 import { Breadcrumb } from 'antd'; 
 
 const iconMapping = {
-  fin: <AccountBookOutlined />,
-  dataset: <CodeSandboxOutlined />,
-  model: <AimOutlined />,
-  mgr: <ApartmentOutlined />,
+  fdata: <AccountBookOutlined />,
+  fmodel: <AimOutlined />,
+  cdata: <CodeSandboxOutlined />,
+  cmodel: <BuildOutlined />,
+  mgr: <ControlOutlined />,
   replay:<ClockCircleOutlined />,
   quote: <RiseOutlined />,
   cap: <TransactionOutlined />,
@@ -27,10 +28,20 @@ const iconMapping = {
   info: <SendOutlined />,
   img: <PictureOutlined />,
   text:<BookOutlined />,
-  sers:<StockOutlined />,
+  ser:<StockOutlined />,
   audio:<CustomerServiceOutlined />,
   video:<VideoCameraOutlined />,
-  m_modal:<RadarChartOutlined />
+  mmodal:<RadarChartOutlined />,
+  dworld:<DatabaseOutlined />,
+  my:<UserOutlined />,
+  myasset:<WalletOutlined />,
+  rec:<TrademarkCircleOutlined />,
+  symbol:<FontColorsOutlined />,
+  hardware:<DesktopOutlined />,
+  mystg:<SketchOutlined />,
+  meta:<ExpandOutlined />,
+  source:<CloudDownloadOutlined />,
+  mytrd:<FundProjectionScreenOutlined />,
 };
 export default function Layout() {
   const location = useLocation();
@@ -113,6 +124,7 @@ export default function Layout() {
       className={styles.layout}
       logo={<img src={logo} alt="logo" />}
       title="EXP AI"
+      
       location={{
         pathname: location.pathname,
       }}
@@ -133,7 +145,6 @@ export default function Layout() {
         render: (props, dom) => {
           return (
             <AvatarDropdown avatar={userState.currentUser.avatar} name={userState.currentUser.name} />
-
           );
         },
       }} 
