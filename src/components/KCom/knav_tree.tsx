@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Radio, Row, Col, Space } from 'antd';
 
-const CascadeRadioGroup = ({ data, onChange }) => {
+const KNavTree = ({ data, onChange }) => {
   const [selected, setSelected] = useState({});
   const initialLevel = data[0]?.level || 'root';
 
@@ -74,7 +74,7 @@ const CascadeRadioGroup = ({ data, onChange }) => {
   };
 
   return (
-    <Row justify="space-between" align="middle" style={{ background: '#fff', marginBottom: 0, padding: '10px 20px 10px 20px', margin: '0 0 10px 0' }}>
+    <Row justify="space-between" align="middle" style={{ background: '#fff', marginBottom: 0, padding: '18px 20px 12px 20px', margin: '0 0 10px 0' }}>
       <Col flex="auto">
         {renderCascade(data)}
       </Col>
@@ -82,4 +82,4 @@ const CascadeRadioGroup = ({ data, onChange }) => {
   );
 };
 
-export default CascadeRadioGroup;
+export default KNavTree;

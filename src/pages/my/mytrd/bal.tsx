@@ -2,16 +2,16 @@ import React, { useEffect, useState,useRef } from 'react';
 import axios from 'axios';  
 import { useLocation,Link } from 'react-router-dom';  
 import { PageContainer } from '@ant-design/pro-components';
-import KNav from '@/components/KCom/knav'; 
+import KNav from '@/components/KCom/knav_base';
+import KNav1 from '@/components/KCom/knav_tree';
 import KTable from '@/components/KCom/ktable';
-import { Space, Tag } from 'antd';
-import { baseURL } from "@/app" 
-import KCart from '@/components/KCom/kcart';
+import { Space } from 'antd';
+import { baseURL } from "@/app"
 
 
-const buildQueryParams = (pageName,curTab,moduleConfig, currentPage, qkey, sort, selectedFilters) => { 
-  //console.log('curTab',curTab);
-  const { dtype = null, filter = null, tabName = null, page_size = 10, time = null } = moduleConfig;
+const buildQueryParams = (pageName,curTab, currentPage, qkey, sort, selectedFilters) => { 
+  const module_config = (curTab.modules && curTab.modules[0]) ? curTab.modules[0] : {dtype: "table", tabName: curTab.key, page_size: 20};
+  const { dtype = null, filter = null, tabName = null, page_size = 10, time = null } = module_config;
   const queryParams = [
     pageName && `name=${pageName}`,
     tabName && `tab=${tabName}`,
@@ -25,19 +25,17 @@ const buildQueryParams = (pageName,curTab,moduleConfig, currentPage, qkey, sort,
     `sort_field=${sort.field}`,
     `sort_order=${sort.order}`,
   ].filter(Boolean).join('&'); // 过滤掉undefined和空字符串
-  console.log('queryParams',queryParams);
 
   return `${baseURL}/q?${queryParams}`;
 };
 
-const KData: React.FC = () => {  
+const MyTrd: React.FC = () => {  
 
   const location = useLocation();
   const pageName = location.pathname.slice(1); 
-  console.log('location pageName',pageName);
   const [data, setData] = useState([]);
   const [navs, setNavs] = useState([]);
-  const [tabKey, setTabKey] = useState('');
+  const [tabKey, setTabKey] = useState('account_info');
   const isFirstRun = useRef(true);
   const [sort, setSort] = useState({ field: '', order: '' }); // 排序状态
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,18 +44,17 @@ const KData: React.FC = () => {
   const [curTab,setCurTab] = useState({});
   const [qkey, setQkey] = useState(''); // 新的状态变量
   const [selectedFilters, setSelectedFilters] = useState({}); // 存储每个 Radio.Group 的选中值
-  const [moduleConfig, setModuleConfig] = useState({}); // 存储每个 Radio.Group 的选中值
 
   
   const handleTabChange = (key: string) => {
     setTabKey(key);
     const foundTab = tabs.find(tab => tab.key === key);
+    //console.log('foundTab',foundTab);
     if (foundTab) {
       setCurTab(foundTab);
     } 
   }
   const handleNavChange = (selected: { [level: string]: string }) => {
-    //console.log('selected',selected);
     setSelectedFilters(selected);
   };
   const handleTableChange = (pagination, filters, sorter) => {
@@ -72,52 +69,36 @@ const KData: React.FC = () => {
   useEffect(() => {
     // 假设从后端获取数据并设置 menuItems 
     const url = `${baseURL}/page?name=${pageName}`
-    setData([]); // 清空数据
-    setNavs([]); // 清空导航
-    setTabKey(''); // 设置默认 Tab Key
-    setSort({ field: '', order: '' }); // 重置排序状态
-    setCurrentPage(1); // 重置当前页
-    setQkey(''); // 重置 qkey
-    setSelectedFilters({}); // 重置筛选项
-    setModuleConfig({}); // 重置模块配置
-    
+
     fetch(url)
       .then((response) => response.json())
       .then((data) => {
         setPage(data);
         setTabs(data.tabs); 
         setCurTab(data.tabs[0]);  
-        
-        const module_config = data.tabs?.[0]?.modules?.[0] 
-        ? data.tabs[0].modules[0]
-        : {dtype: "table", tabName: data.tabs?.[0]?.key ?? 'defaultKey', page_size: 20};
-      
-        setModuleConfig(module_config);
       });
   }, [pageName]);
   
 
   useEffect(() => {
-    console.log('pageName',pageName);
-    if (!curTab || Object.keys(curTab).length === 0) return;
-    const url = buildQueryParams(pageName,curTab,moduleConfig, currentPage, qkey, sort, selectedFilters);
+    // config= curTab.modules[0] 
+    const url = buildQueryParams(pageName,curTab, currentPage, qkey, sort, selectedFilters);
+    console.log('url',url);
 
+    //axios.get(`http://localhost:9001/q1?name=${pageName}&filter=${JSON.stringify(selectedFilters)}&tab=${tabKey}`)
     axios.get(url)
       .then(response => {     //.then((response) => response.json())
         let data = response.data;
-        //console.log('data',data);
-
         setData(data);  
         if (isFirstRun.current) {
           setNavs(data.navs);
-          console.log('isFirstRun.current',data);
           isFirstRun.current = false;
         }
        })
       .catch(error => {
         console.error('Error fetching menu:', error);
       });
-  }, [pageName,selectedFilters,tabKey,curTab]);
+  }, [pageName,selectedFilters,tabKey]);
  
   
   useEffect(() => { 
@@ -132,8 +113,8 @@ const KData: React.FC = () => {
         tabList={tabs}
         content={
           <div>
-            {page?.data?.data_size && <span>数据大小: {page.data.data_size}</span>}
-            <Tag color="blue" style={{ marginLeft: '10px',fontWeight:'normal' }}>标</Tag>
+            { "数据大小"}
+            {/* <Tag color="blue" style={{ marginLeft: '10px',fontWeight:'normal' }}>图像分类</Tag> */}
           </div>
         }
         // title={
@@ -143,28 +124,18 @@ const KData: React.FC = () => {
         extra={
           <div style={{ position: 'absolute', right: '20px', bottom: '20px' }}>
             <Space>
-            {page?.data?.last_update && (
-              <span style={{ fontSize: '14px', color: '#888888' }}>
-                数据更新: {page.data.last_update}
-              </span>
-            )}
+            数据更新
             </Space>
           </div>
         }
         onTabChange={handleTabChange}
         />  
     <div style={{margin:'10px 10px 10px 10px'}}>
-    {navs && navs.length > 0 && <KNav data={navs} onChange={handleNavChange} navType={data.nav_type} ></KNav>}
-    {data && data.data && (
-      data.vtype === 'card' ? ( <>
-         <KCart data={data} config={moduleConfig} /></>
-      ) : (<>
-        <KTable  data={data} onTableChange={handleTableChange} /></>
-      )
-    )}
+    {navs && navs.length > 0 && <KNav1 key={"knav1"} data={navs} onChange={handleNavChange} ></KNav1>}
+    {data && data.data  && <KTable key={"table"} data={data} onTableChange={handleTableChange} ></KTable>}
     </div>       
     </>
  
      )};
 
-export default KData;
+export default MyTrd;

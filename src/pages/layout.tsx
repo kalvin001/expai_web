@@ -89,7 +89,7 @@ export default function Layout() {
   useEffect(() => {
     // 遍历所有菜单项
     menuItemsConfig.forEach(item => { 
-        console.log(item.key,location.pathname,location.pathname.includes(item.key));
+        //console.log(item.key,location.pathname,location.pathname.includes(item.key));
         if (location.pathname.includes(item.key)) {
             setSelectedMenu(item.key);
             return;
